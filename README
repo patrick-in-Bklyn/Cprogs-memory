@@ -1,0 +1,57 @@
+Functions to make memory allocation and removal easier
+
+System calls used
+malloc, calloc realloc and free. 
+
+Reason for functions
+These functions relate to allocation and re-sizing of memory blocks in the heap. 
+
+They are the source of many valgrind errors and segfaults
+
+	valgrind errors are reported when we use uninitialized memory. 
+
+	Valgrind Errors
+
+		Malloc returns a pointer to uninititalized memory 
+			* according to one comment in stack overflow, malloc may "over-commit" to memory allocation by returning a point to memory that is not necessarily available. 
+			* It only allocates the memory block when the program touches it. It is possible, therefore that memory you THINK is allocated is really not.
+
+		Realloc changes the size of memory allocated to a pointer but if the memory is increased, the additional memory is uninitialized.
+
+
+		Calloc allocates memory AND initializes it. The disadvantage is that calloc is slower than Malloc for two reasons. 
+			* First it initializes the memory bloc with char '\0''s
+		
+
+			* Calloc touches the memory (for the most part) because it fills it with '\0''s, so the memory you have is more reliably there.
+
+	
+	Segfaults
+		these occur for a few reasons. 
+
+			* memory Overflow - try to access an area outside the allocated memory area
+			* try to manipulate a 0 length memory block
+			* Increase the size of a memory block where realloc relocates the block of memory but then try to access the already freed block of old memory. 
+			* Call free more than once on the same memory block
+
+ 		 
+solution
+	Use Malloc. It will allocate and initialize the memory block
+	when using realloc, return the pointer value to the new memory block. 
+	Initialize the new part of the memory block before return (leave the old part alone as that has values in it).
+
+	Free. Maintain a growable array of pointers that is updated with pointers to allocated memory blocks
+	Maintain a second array with pointers to freed memory. 
+
+	when we call free. 
+
+	The block is NOT in the alloc'd list and NOT  in the freed list. 
+		free the block but write to syslog (we may have called malloc and not Malloc)
+	the block is NOT in the alloc'd list and is in the freed list
+		don't do anything
+	the block is on the alloc'd list but not on the freed list
+		free the block
+ 
+
+
+
